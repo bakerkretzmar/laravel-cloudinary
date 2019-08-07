@@ -1,39 +1,50 @@
 {
-    "name": "jrm2k6/cloudder",
+    "name": "bakerkretzmar/laravel-cloudinary",
     "description": "Cloudinary API wrapper for Laravel",
-    "keywords": ["laravel", "laravel4", "cloudinary", "api", "image", "upload"],
-    "homepage": "https://github.com/jrm2k6/cloudder",
+    "keywords": ["laravel", "cloudinary", "api", "image", "upload"],
+    "homepage": "https://github.com/bakerkretzmar/laravel-cloudinary",
     "type": "library",
     "license": "MIT",
     "authors": [
         {
             "name": "Jeremy Dagorn",
             "email": "jeremy.dagorn@gmail.com"
+        },
+        {
+            "name": "Jacob Baker-Kretzmar",
+            "email": "jacobtbk@gmail.com"
         }
     ],
     "require": {
-        "php": ">=5.3.0",
-        "cloudinary/cloudinary_php": ">=1.1"
+        "php": ">=7.2.0"
     },
     "require-dev": {
-        "laravel/framework": ">=5.0",
-        "phpunit/phpunit": "4.*",
-        "mockery/mockery": "0.9.*"
+        "orchestra/testbench": "^3.8",
+        "phpunit/phpunit": "^8.3"
     },
     "autoload": {
-        "psr-0": {
-            "JD\\Cloudder": "src/"
+        "psr-4": {
+            "Bakerkretzmar\\LaravelCloudinary\\": "src/"
         }
     },
-    "minimum-stability": "stable",
+    "autoload-dev": {
+        "psr-4": {
+            "Bakerkretzmar\\LaravelCloudinary\\Tests\\": "tests/"
+        }
+    },
     "extra": {
         "laravel": {
             "providers": [
-                "JD\\Cloudder\\CloudderServiceProvider"
+                "Bakerkretzmar\\LaravelCloudinary\\LaravelCloudinaryServiceProvider"
             ],
             "aliases": {
-                "Cloudder": "JD\\Cloudder\\Facades\\Cloudder"
+                "Cloudinary": "Bakerkretzmar\\LaravelCloudinary\\Facades\\Cloudinary"
             }
         }
-    }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
