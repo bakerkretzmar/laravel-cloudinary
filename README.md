@@ -2,7 +2,7 @@ Laravel Cloudinary
 ==================
 
 [![Build Status](https://travis-ci.org/bakerkretzmar/laravel-cloudinary.svg?branch=master)](https://travis-ci.org/bakerkretzmar/laravel-cloudinary)
-<!-- [![StyleCI](https://github.styleci.io/repos/192925375/shield?branch=master&style=flat)](https://github.styleci.io/repos/192925375) -->
+[![StyleCI](https://github.styleci.io/repos/201132752/shield?branch=master&style=flat)](https://github.styleci.io/repos/201132752)
 <!-- [![Scrutinizer code quality](https://scrutinizer-ci.com/g/bakerkretzmar/laravel-mapbox/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/bakerkretzmar/laravel-mapbox/?branch=master) -->
 [![Latest stable version](https://img.shields.io/packagist/v/bakerkretzmar/laravel-cloudinary.svg?style=flat)](https://packagist.org/packages/bakerkretzmar/laravel-cloudinary)
 [![Total downloads](https://img.shields.io/packagist/dt/bakerkretzmar/laravel-cloudinary.svg?style=flat)](https://packagist.org/packages/bakerkretzmar/laravel-cloudinary)[![MIT license](https://img.shields.io/packagist/l/bakerkretzmar/laravel-cloudinary.svg?style=flat)](https://github.com/bakerkretzmar/laravel-cloudinary/blob/master/LICENSE)
@@ -16,45 +16,34 @@ Installation
 composer require bakerkretzmar/laravel-mapbox
 ```
 
+Configuration
+-------------
 
+Add the following to your `.env` file:
 
+```bash
+# Required
+CLOUDINARY_CLOUD_NAME={your Cloudinary cloud name}
+CLOUDINARY_API_KEY={your Cloudinary API key}
+CLOUDINARY_API_SECRET={your Cloudinary API secret}
 
-## Configuration
-
-Modify your `.env` file to add the following information from [Cloudinary](http://www.cloudinary.com)
-
-### Required
-
-
-```
-CLOUDINARY_API_KEY=012345679890123
-CLOUDINARY_API_SECRET=foobarfoobarfoob-arfoobarfo
-CLOUDINARY_CLOUD_NAME=foobarcorp
-```
-
-### Optional
-
-```
-CLOUDINARY_BASE_URL
-CLOUDINARY_SECURE_URL
-CLOUDINARY_API_BASE_URL
-```
-Laravel 5.5+ uses Package Auto-Discovery, so doesn't require you to manually add the ServiceProvider.
-If you don't use auto-discovery follow the next steps:
-
-Add the following in config/app.php:
-
-```php
-'providers' => array(
-  JD\Cloudder\CloudderServiceProvider::class,
-);
-
-'aliases' => array(
-  'Cloudder' => JD\Cloudder\Facades\Cloudder::class,
-);
+# Optional
+CLOUDINARY_BASE_URL={custom base asset URL}
+CLOUDINARY_SECURE_URL={secure custom base asset URL}
 ```
 
-Run `php artisan vendor:publish --provider="JD\Cloudder\CloudderServiceProvider"`
+Optionally, you can publish the package’s config file:
+
+```bash
+php artisan vendor:publish --provider="Bakerkretzmar\LaravelCloudinary\LaravelCloudinaryServiceProvider"
+```
+
+
+
+
+
+
+
 
 ## Usage
 
@@ -231,6 +220,11 @@ returns a `download url` for the newly created archive on Cloudinary.
 ## Example
 
 You can find a working example in the repo [cloudder-l5-example](https://github.com/jrm2k6/cloudder-l5-sample-project)
+
+
+
+
+
 
 Credits
 -------
