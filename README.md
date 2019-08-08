@@ -1,21 +1,22 @@
-# Cloudder - Cloudinary wrapper for Laravel 5 / Lumen
+Laravel Cloudinary
+==================
 
-[![Build Status](http://img.shields.io/travis/jrm2k6/cloudder/master.svg?style=flat-square)](https://travis-ci.org/jrm2k6/cloudder)
-[![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](http://www.opensource.org/licenses/MIT)
-[![Latest Version](http://img.shields.io/packagist/v/jrm2k6/cloudder.svg?style=flat-square)](https://packagist.org/packages/jrm2k6/cloudder)
-[![Total Downloads](https://img.shields.io/packagist/dt/jrm2k6/cloudder.svg?style=flat-square)](https://packagist.org/packages/jrm2k6/cloudder)
+[![Build Status](https://travis-ci.org/bakerkretzmar/laravel-cloudinary.svg?branch=master)](https://travis-ci.org/bakerkretzmar/laravel-cloudinary)
+<!-- [![StyleCI](https://github.styleci.io/repos/192925375/shield?branch=master&style=flat)](https://github.styleci.io/repos/192925375) -->
+<!-- [![Scrutinizer code quality](https://scrutinizer-ci.com/g/bakerkretzmar/laravel-mapbox/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/bakerkretzmar/laravel-mapbox/?branch=master) -->
+[![Latest stable version](https://img.shields.io/packagist/v/bakerkretzmar/laravel-cloudinary.svg?style=flat)](https://packagist.org/packages/bakerkretzmar/laravel-cloudinary)
+[![Total downloads](https://img.shields.io/packagist/dt/bakerkretzmar/laravel-cloudinary.svg?style=flat)](https://packagist.org/packages/bakerkretzmar/laravel-cloudinary)[![MIT license](https://img.shields.io/packagist/l/bakerkretzmar/laravel-cloudinary.svg?style=flat)](https://github.com/bakerkretzmar/laravel-cloudinary/blob/master/LICENSE)
 
-> Initially forked from https://github.com/teepluss/laravel4-cloudinary.
+[Cloudinary](https://cloudinary.com/) API wrapper for Laravel.
 
-> As it doesn't seem to be maintained anymore, and facing the lack of response from the original maitainer (issue opened + pull request opened, last commit on August last year), I decided to create a new fork that I plan on maintaining.
+Installation
+------------
 
-> **If there is any feature you would like feel free to open an issue or send me an email!**
+```bash
+composer require bakerkretzmar/laravel-mapbox
+```
 
-## Installation
 
-`composer require jrm2k6/cloudder`
-
-For people still using Laravel 4.2: `composer require jrm2k6/cloudder:0.1.*` and check the branch l4 for the installation instructions.
 
 
 ## Configuration
@@ -230,3 +231,8 @@ returns a `download url` for the newly created archive on Cloudinary.
 ## Example
 
 You can find a working example in the repo [cloudder-l5-example](https://github.com/jrm2k6/cloudder-l5-sample-project)
+
+Credits
+-------
+
+Based on Jeremy Dagorn’s [`cloudder`](https://github.com/jrm2k6/cloudder).
