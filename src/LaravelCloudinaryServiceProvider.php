@@ -2,8 +2,6 @@
 
 namespace Bakerkretzmar\LaravelCloudinary;
 
-use Cloudinary as CloudinaryApi;
-
 use Illuminate\Support\ServiceProvider;
 
 class LaravelCloudinaryServiceProvider extends ServiceProvider
@@ -22,9 +20,9 @@ class LaravelCloudinaryServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/laravel-cloudinary.php', 'laravel-cloudinary');
 
         $this->app->singleton(Cloudinaire::class, function () {
-            return new Cloudinaire(config('laravel-cloudinary'), new CloudinaryApi, new CloudinaryApi\Uploader, new CloudinaryApi\Api);
+            return new Cloudinaire(config('laravel-cloudinary'));
         });
 
-        $this->app->alias(Cloudinaire::class, 'cloudinary');
+        $this->app->alias(Cloudinaire::class, 'cloudinaire');
     }
 }

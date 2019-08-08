@@ -2,30 +2,27 @@
 
 namespace Bakerkretzmar\LaravelCloudinary\Tests;
 
-use Bakerkretzmar\LaravelCloudinary\Cloudinaire;
-
-use PHPUnit\Framework\TestCase;
+use Cloudinaire;
 
 use Mockery;
 
 class CloudinaireTest extends TestCase
 {
-    protected $cloudinaire;
+    protected $cloudinary;
+    protected $uploader;
+    protected $api;
 
     protected function setUp(): void
     {
-        $this->config = Mockery::mock('Illuminate\Config\Repository');
+        parent::setUp();
+
         $this->cloudinary = Mockery::mock('Cloudinary');
         $this->uploader = Mockery::mock('Cloudinary\Uploader');
         $this->api = Mockery::mock('Cloudinary\Api');
 
-        $this->config->shouldReceive('get')->once()->with('laravel-cloudinary.cloud_name')->andReturn('cloud_name');
-        $this->config->shouldReceive('get')->once()->with('laravel-cloudinary.key')->andReturn('key');
-        $this->config->shouldReceive('get')->once()->with('laravel-cloudinary.secret')->andReturn('secret');
+        Cloudinaire::swap(Cloudinaire::fake($this->cloudinary, $this->uploader, $this->api));
 
-        $this->cloudinary->shouldReceive('config')->once();
-
-        $this->cloudinaire = new Cloudinaire($this->config, $this->cloudinary, $this->uploader, $this->api);
+        // $this->cloudinary->shouldReceive('config')->once();
     }
 
     protected function tearDown(): void
@@ -38,133 +35,98 @@ class CloudinaireTest extends TestCase
     {
         $this->uploader->expects()
             ->upload('file_name', ['public_id' => null, 'tags' => []])
-            ->andReturn(['public_id' => '123456789']);
+            ->andReturns(['public_id' => '123456789']);
 
-        $this->cloudinaire->upload('file_name');
+        Cloudinaire::upload('file_name');
 
-        $result = $this->cloudinaire->getResult();
+        $result = Cloudinaire::getResult();
         $this->assertEquals(['public_id' => '123456789'], $result);
     }
 
     /** @test */
-    public function it_should_set_uploaded_result_when_uploading_picture_unsigned()
+    public function set_upload_result_after_uploading_unsigned_image()
     {
-        // given
-        $filename = 'filename';
-        $defaults_options = [
-            'public_id' => null,
-            'tags'      => array()
-        ];
+        $this->uploader->expects()
+            ->unsigned_upload('file_name', ['param' => 1], ['public_id' => null, 'tags' => []])
+            ->andReturns(['public_id' => '123456789']);
 
-        $upload_presets = [
-            'param' => 1
-        ];
+        Cloudinaire::unsignedUpload('file_name', null, ['param' => 1]);
 
-        $expected_result = ['public_id' => '123456789'];
-
-        $this->uploader->shouldReceive('unsigned_upload')->once()
-            ->with($filename, $upload_presets, $defaults_options)
-            ->andReturn($expected_result);
-
-        // when
-        $this->cloudinaire->unsignedUpload($filename, null, $upload_presets);
-
-        // then
-        $result = $this->cloudinaire->getResult();
-        $this->assertEquals($expected_result, $result);
+        $result = Cloudinaire::getResult();
+        $this->assertEquals(['public_id' => '123456789'], $result);
     }
 
     /** @test */
-    public function it_should_set_uploaded_result_when_uploading_private_picture()
+    public function set_upload_result_after_uploading_private_image()
     {
-        // given
-        $filename = 'filename';
-        $defaults_options = [
-            'public_id' => null,
-            'tags'      => array(),
-            'type'      => 'private'
-        ];
+        $this->uploader->expects()
+            ->upload('file_name', [
+                'public_id' => null,
+                'tags' => [],
+                'type' => 'private',
+            ])
+            ->andReturns(['public_id' => '123456789']);
 
-        $expected_result = ['public_id' => '123456789'];
+        Cloudinaire::upload('file_name', null, ['type' => 'private']);
 
-        $this->uploader->shouldReceive('upload')->once()->with($filename, $defaults_options)->andReturn($expected_result);
-
-        // when
-        $this->cloudinaire->upload($filename, null, ['type' => 'private']);
-
-        // then
-        $result = $this->cloudinaire->getResult();
-        $this->assertEquals($expected_result, $result);
+        $result = Cloudinaire::getResult();
+        $this->assertEquals(['public_id' => '123456789'], $result);
     }
 
     /** @test */
-    public function it_should_returns_image_url_when_calling_show()
+    public function return_image_url_when_calling_show()
     {
-        // given
-        $filename = 'filename';
-        $this->config->shouldReceive('get')->with('laravel-cloudinary.scaling')->once()->andReturn(array());
-        $this->cloudinary->shouldReceive('cloudinary_url')->once()->with($filename, array());
+        $this->cloudinary->expects()
+            ->cloudinary_url('file_name', []);
 
-        // when
-        $this->cloudinaire->show($filename);
+        Cloudinaire::show('file_name');
     }
 
     /** @test */
-    public function it_should_returns_https_image_url_when_calling_secure_show()
+    public function return_https_image_url_when_calling_secure_show()
     {
-        // given
-        $filename = 'filename';
-        $this->config->shouldReceive('get')->with('laravel-cloudinary.scaling')->once()->andReturn(array());
-        $this->cloudinary->shouldReceive('cloudinary_url')->once()->with($filename, ['secure' => true]);
+        $this->cloudinary->expects()
+            ->cloudinary_url('file_name', ['secure' => true]);
 
-        // when
-        $this->cloudinaire->secureShow($filename);
+        Cloudinaire::secureShow('file_name');
     }
 
     /** @test */
-    public function it_should_returns_image_url_when_calling_show_private_url()
+    public function return_image_url_when_calling_show_private_url()
     {
-        // given
-        $filename = 'filename';
-        $this->cloudinary->shouldReceive('private_download_url')->once()->with($filename, 'png', array());
+        $this->cloudinary->expects()
+            ->private_download_url('file_name', 'png', []);
 
-        // when
-        $this->cloudinaire->showPrivateUrl($filename, 'png');
+        Cloudinaire::showPrivateUrl('file_name', 'png');
     }
 
     /** @test */
-    public function it_should_returns_image_url_when_calling_private_download_url()
+    public function return_image_url_when_calling_private_download_url()
     {
-        // given
-        $filename = 'filename';
-        $this->cloudinary->shouldReceive('private_download_url')->once()->with($filename, 'png', array());
+        $this->cloudinary->expects()
+            ->private_download_url('file_name', 'png', []);
 
-        // when
-        $this->cloudinaire->privateDownloadUrl($filename, 'png');
+        Cloudinaire::privateDownloadUrl('file_name', 'png');
     }
 
     /** @test */
-    public function it_should_call_api_rename_when_calling_rename()
+    public function call_uploader_rename_when_calling_rename()
     {
-        // given
-        $from = 'from';
-        $to = 'to';
+        $this->uploader->expects()
+            ->rename('from', 'to', []);
 
-        $this->uploader->shouldReceive('rename')->with($from, $to, array())->once();
-
-        // when
-        $this->cloudinaire->rename($from, $to);
+        Cloudinaire::rename('from', 'to');
     }
 
     /** @test */
-    public function it_should_call_api_destroy_when_calling_destroy_image()
+    public function call_uploader_destroy_when_calling_destroy_image()
     {
         // given
         $pid = 'pid';
         $this->uploader->shouldReceive('destroy')->with($pid, array())->once();
 
         // when
-        $this->cloudinaire->destroyImage($pid);
+        Cloudinaire::destroyImage($pid);
     }
 
     /** @test */
@@ -175,7 +137,7 @@ class CloudinaireTest extends TestCase
         $this->uploader->shouldReceive('destroy')->with($pid, array())->once();
 
         // when
-        $this->cloudinaire->destroy($pid);
+        Cloudinaire::destroy($pid);
     }
 
     /** @test */
@@ -186,7 +148,7 @@ class CloudinaireTest extends TestCase
         $this->uploader->shouldReceive('destroy')->with($pid, array())->once()->andReturn(['result' => 'ok']);
 
         // when
-        $deleted = $this->cloudinaire->delete($pid);
+        $deleted = Cloudinaire::delete($pid);
         $this->assertTrue($deleted);
     }
 
@@ -198,7 +160,7 @@ class CloudinaireTest extends TestCase
 
         $this->uploader->shouldReceive('add_tag')->once()->with($tag, $pids, array());
 
-        $this->cloudinaire->addTag($tag, $pids);
+        Cloudinaire::addTag($tag, $pids);
     }
 
     /** @test */
@@ -209,7 +171,7 @@ class CloudinaireTest extends TestCase
 
         $this->uploader->shouldReceive('remove_tag')->once()->with($tag, $pids, array());
 
-        $this->cloudinaire->removeTag($tag, $pids);
+        Cloudinaire::removeTag($tag, $pids);
     }
 
     /** @test */
@@ -220,7 +182,7 @@ class CloudinaireTest extends TestCase
 
         $this->uploader->shouldReceive('replace_tag')->once()->with($tag, $pids, array());
 
-        $this->cloudinaire->replaceTag($tag, $pids);
+        Cloudinaire::replaceTag($tag, $pids);
     }
 
     /** @test */
@@ -229,7 +191,7 @@ class CloudinaireTest extends TestCase
         $pids = ['pid1', 'pid2'];
         $this->api->shouldReceive('delete_resources')->once()->with($pids, array());
 
-        $this->cloudinaire->destroyImages($pids);
+        Cloudinaire::destroyImages($pids);
     }
 
     /** @test */
@@ -238,7 +200,7 @@ class CloudinaireTest extends TestCase
         $pids = ['pid1', 'pid2'];
         $this->api->shouldReceive('delete_resources')->once()->with($pids, array());
 
-        $this->cloudinaire->deleteResources($pids);
+        Cloudinaire::deleteResources($pids);
     }
 
     /** @test */
@@ -247,7 +209,7 @@ class CloudinaireTest extends TestCase
         $prefix = 'prefix';
         $this->api->shouldReceive('delete_resources_by_prefix')->once()->with($prefix, array());
 
-        $this->cloudinaire->deleteResourcesByPrefix($prefix);
+        Cloudinaire::deleteResourcesByPrefix($prefix);
     }
 
     /** @test */
@@ -255,7 +217,7 @@ class CloudinaireTest extends TestCase
     {
         $this->api->shouldReceive('delete_all_resources')->once()->with(array());
 
-        $this->cloudinaire->deleteAllResources();
+        Cloudinaire::deleteAllResources();
     }
 
     /** @test */
@@ -264,7 +226,7 @@ class CloudinaireTest extends TestCase
         $tag = 'tag1';
         $this->api->shouldReceive('delete_resources_by_tag')->once()->with($tag, array());
 
-        $this->cloudinaire->deleteResourcesByTag($tag);
+        Cloudinaire::deleteResourcesByTag($tag);
     }
 
     /** @test */
@@ -273,7 +235,7 @@ class CloudinaireTest extends TestCase
         $pids = ['pid1', 'pid2'];
         $this->api->shouldReceive('delete_derived_resources')->once()->with($pids, array());
 
-        $this->cloudinaire->deleteDerivedResources($pids);
+        Cloudinaire::deleteDerivedResources($pids);
     }
 
     /** @test */
@@ -292,10 +254,10 @@ class CloudinaireTest extends TestCase
         $this->uploader->shouldReceive('upload')->once()->with($filename, $defaults_options)->andReturn($expected_result);
 
         // when
-        $this->cloudinaire->uploadVideo($filename);
+        Cloudinaire::uploadVideo($filename);
 
         // then
-        $result = $this->cloudinaire->getResult();
+        $result = Cloudinaire::getResult();
         $this->assertEquals($expected_result, $result);
     }
 
@@ -308,7 +270,7 @@ class CloudinaireTest extends TestCase
         );
 
         // when
-        $this->cloudinaire->createArchive(['tag' => 'kitten']);
+        Cloudinaire::createArchive(['tag' => 'kitten']);
     }
 
     /** @test */
@@ -320,7 +282,7 @@ class CloudinaireTest extends TestCase
         );
 
         // when
-        $this->cloudinaire->createArchive(['tag' => 'kitten'], 'kitten_archive');
+        Cloudinaire::createArchive(['tag' => 'kitten'], 'kitten_archive');
     }
 
     /** @test */
@@ -332,7 +294,7 @@ class CloudinaireTest extends TestCase
         );
 
         // when
-        $this->cloudinaire->downloadArchiveUrl(['tag' => 'kitten']);
+        Cloudinaire::downloadArchiveUrl(['tag' => 'kitten']);
     }
 
     /** @test */
@@ -344,7 +306,7 @@ class CloudinaireTest extends TestCase
         );
 
         // when
-        $this->cloudinaire->downloadArchiveUrl(['tag' => 'kitten'], 'kitten_archive');
+        Cloudinaire::downloadArchiveUrl(['tag' => 'kitten'], 'kitten_archive');
     }
 
     /** @test */
@@ -354,7 +316,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('resources')->once()->with(array());
 
         // when
-        $this->cloudinaire->resources();
+        Cloudinaire::resources();
     }
 
     /** @test */
@@ -368,7 +330,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('resources_by_ids')->once()->with($pids, $options);
 
         // when
-        $this->cloudinaire->resourcesByIds($pids, $options);
+        Cloudinaire::resourcesByIds($pids, $options);
     }
 
     /** @test */
@@ -380,7 +342,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('resources_by_tag')->once()->with($tag, array());
 
         // when
-        $this->cloudinaire->resourcesByTag($tag);
+        Cloudinaire::resourcesByTag($tag);
     }
 
     /** @test */
@@ -393,7 +355,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('resources_by_moderation')->once()->with($kind, $status, array());
 
         // when
-        $this->cloudinaire->resourcesByModeration($kind, $status);
+        Cloudinaire::resourcesByModeration($kind, $status);
     }
 
     /** @test */
@@ -403,7 +365,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('tags')->once()->with(array());
 
         // when
-        $this->cloudinaire->tags();
+        Cloudinaire::tags();
     }
 
     /** @test */
@@ -415,7 +377,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('resource')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->resource($pid);
+        Cloudinaire::resource($pid);
     }
 
     /** @test */
@@ -428,7 +390,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('update')->once()->with($pid, $options);
 
         // when
-        $this->cloudinaire->update($pid, $options);
+        Cloudinaire::update($pid, $options);
     }
 
     /** @test */
@@ -438,7 +400,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('transformations')->once()->with(array());
 
         // when
-        $this->cloudinaire->transformations();
+        Cloudinaire::transformations();
     }
 
     /** @test */
@@ -450,7 +412,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('transformation')->once()->with($transformation, array());
 
         // when
-        $this->cloudinaire->transformation($transformation);
+        Cloudinaire::transformation($transformation);
     }
 
     /** @test */
@@ -462,7 +424,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('delete_transformation')->once()->with($transformation, array());
 
         // when
-        $this->cloudinaire->deleteTransformation($transformation);
+        Cloudinaire::deleteTransformation($transformation);
     }
 
     /** @test */
@@ -475,7 +437,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('update_transformation')->once()->with($transformation, $updates, array());
 
         // when
-        $this->cloudinaire->updateTransformation($transformation, $updates);
+        Cloudinaire::updateTransformation($transformation, $updates);
     }
 
     /** @test */
@@ -488,7 +450,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('create_transformation')->once()->with($name, $definition, array());
 
         // when
-        $this->cloudinaire->createTransformation($name, $definition);
+        Cloudinaire::createTransformation($name, $definition);
     }
 
     /** @test */
@@ -500,7 +462,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('restore')->once()->with($pids, array());
 
         // when
-        $this->cloudinaire->restore($pids);
+        Cloudinaire::restore($pids);
     }
 
     /** @test */
@@ -510,7 +472,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('upload_mappings')->once()->with(array());
 
         // when
-        $this->cloudinaire->uploadMappings();
+        Cloudinaire::uploadMappings();
     }
 
     /** @test */
@@ -522,7 +484,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('upload_mapping')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->uploadMapping($pid);
+        Cloudinaire::uploadMapping($pid);
     }
 
     /** @test */
@@ -534,7 +496,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('create_upload_mapping')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->createUploadMapping($pid);
+        Cloudinaire::createUploadMapping($pid);
     }
 
     /** @test */
@@ -546,7 +508,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('delete_upload_mapping')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->deleteUploadMapping($pid);
+        Cloudinaire::deleteUploadMapping($pid);
     }
 
     /** @test */
@@ -558,7 +520,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('update_upload_mapping')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->updateUploadMapping($pid);
+        Cloudinaire::updateUploadMapping($pid);
     }
 
     /** @test */
@@ -568,7 +530,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('upload_presets')->once()->with(array());
 
         // when
-        $this->cloudinaire->uploadPresets();
+        Cloudinaire::uploadPresets();
     }
 
 
@@ -581,7 +543,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('upload_preset')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->uploadPreset($pid);
+        Cloudinaire::uploadPreset($pid);
     }
 
     /** @test */
@@ -593,7 +555,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('create_upload_preset')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->createUploadPreset($pid);
+        Cloudinaire::createUploadPreset($pid);
     }
 
     /** @test */
@@ -605,7 +567,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('delete_upload_preset')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->deleteUploadPreset($pid);
+        Cloudinaire::deleteUploadPreset($pid);
     }
 
     /** @test */
@@ -617,7 +579,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('update_upload_preset')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->updateUploadPreset($pid);
+        Cloudinaire::updateUploadPreset($pid);
     }
 
     /** @test */
@@ -627,7 +589,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('root_folders')->once()->with(array());
 
         // when
-        $this->cloudinaire->rootFolders();
+        Cloudinaire::rootFolders();
     }
 
     /** @test */
@@ -639,7 +601,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('subfolders')->once()->with($pid, array());
 
         // when
-        $this->cloudinaire->subfolders($pid);
+        Cloudinaire::subfolders($pid);
     }
 
     /** @test */
@@ -649,7 +611,7 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('usage')->once()->with(array());
 
         // when
-        $this->cloudinaire->usage();
+        Cloudinaire::usage();
     }
 
     /** @test */
@@ -659,6 +621,6 @@ class CloudinaireTest extends TestCase
         $this->api->shouldReceive('ping')->once()->with(array());
 
         // when
-        $this->cloudinaire->ping();
+        Cloudinaire::ping();
     }
 }

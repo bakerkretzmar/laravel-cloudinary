@@ -2,29 +2,35 @@
 
 namespace Bakerkretzmar\LaravelCloudinary;
 
-use Cloudinary as CloudinaryApi;
+use Cloudinary;
 
 class Cloudinaire
 {
-
     /**
-     * Cloudinary lib.
+     * Cloudinary library.
      *
-     * @var \Cloudinary
+     * @var  \Cloudinary
      */
     protected $cloudinary;
 
     /**
      * Cloudinary uploader.
      *
-     * @var \Cloudinary\Uploader
+     * @var  \Cloudinary\Uploader
      */
     protected $uploader;
 
     /**
-     * Repository config.
+     * Cloudinary API.
      *
-     * @var \Illuminate\Config\Repository
+     * @var  \Cloudinary\Api
+     */
+    protected $api;
+
+    /**
+     * LaravelCloudinary config.
+     *
+     * @var  array
      */
     protected $config;
 
@@ -36,89 +42,54 @@ class Cloudinaire
     protected $uploadedResult;
 
     /**
-     * Create a new cloudinary instance.
+     * Create a new instance of the Cloudinary API wrapper.
      *
-     * @param  \Illuminate\Config\Repository $config
-     * @return void
+     * @param  array  $config
      */
-    public function __construct(
-        $config,
-        CloudinaryApi $cloudinary,
-        CloudinaryApi\Uploader $uploader,
-        CloudinaryApi\Api $api
-    ) {
-        $this->cloudinary = $cloudinary;
-
-        $this->uploader = $uploader;
-
-        $this->api = $api;
-
+    public function __construct(array $config = [])
+    {
         $this->config = $config;
 
-        $this->cloudinary->config(array(
-            'cloud_name' => $this->config->get('laravel-cloudinary.cloud_name'),
-            'api_key'    => $this->config->get('laravel-cloudinary.key'),
-            'api_secret' => $this->config->get('laravel-cloudinary.secret')
-        ));
+        $this->cloudinary = new Cloudinary;
+        $this->uploader = new Cloudinary\Uploader;
+        $this->api = new Cloudinary\Api;
+
+        $this->cloudinary->config([
+            'cloud_name' => $this->config['cloud_name'],
+            'api_key'    => $this->config['key'],
+            'api_secret' => $this->config['secret'],
+        ]);
     }
 
     /**
-     * Get cloudinary class.
-     *
-     * @return \Cloudinary
+     * Create a fake instance of the Cloudinary API wrapper for testing.
      */
-    public function getCloudinary()
+    public static function fake($cloudinary, $uploader, $api)
     {
-        return $this->cloudinary;
+        $fake = new static(config('laravel-cloudinary'));
+
+        $fake->cloudinary = $cloudinary;
+        $fake->uploader = $uploader;
+        $fake->api = $api;
+
+        return $fake;
     }
-
-    /**
-     * Get cloudinary uploader.
-     *
-     * @return \Cloudinary\Uploader
-     */
-    public function getUploader()
-    {
-        return $this->uploader;
-    }
-
-    /**
-     * Get cloudinary api
-     *
-     * @return \Cloudinary\Api
-     */
-    public function getApi()
-    {
-        return $this->api;
-    }
-
-
-
 
     /**
      * Upload image to cloud.
      *
      * @param  mixed $source
-     * @param  string $publicId
-     * @param  array $uploadOptions
+     * @param  string $public_id
+     * @param  array $options
      * @param  array $tags
      * @return Cloudinaire
      */
-    public function upload($source, $publicId = null, $uploadOptions = array(), $tags = array())
+    public function upload($source, string $public_id = null, array $options = [], array $tags = [])
     {
-        $defaults = array(
-            'public_id' => null,
-            'tags'      => array()
-        );
-
-        $options = array_merge($defaults, array(
-            'public_id' => $publicId,
-            'tags'      => $tags
-        ));
-
-        $options = array_merge($options, $uploadOptions);
-
-        $this->uploadedResult = $this->getUploader()->upload($source, $options);
+        $this->uploadedResult = $this->uploader->upload($source, array_merge([
+            'public_id' => $public_id,
+            'tags' => $tags,
+        ], $options));
 
         return $this;
     }
@@ -147,7 +118,7 @@ class Cloudinaire
         ));
 
         $options = array_merge($options, $uploadOptions);
-        $this->uploadedResult = $this->getUploader()->unsigned_upload($source, $uploadPresets, $options);
+        $this->uploadedResult = $this->uploader->unsigned_upload($source, $uploadPresets, $options);
 
         return $this;
     }
@@ -188,79 +159,68 @@ class Cloudinaire
     }
 
     /**
-     * Display resource through https.
+     * Generate resource URL.
      *
-     * @param  string $publicId
-     * @param  array  $options
-     * @return string
+     * @param   string  $public_id
+     * @param   array   $options
+     * @return  string
      */
-    public function show($publicId, $options = array())
+    public function show(string $public_id, array $options = [])
     {
-        $defaults = $this->config->get('laravel-cloudinary.scaling');
+        $options = array_merge($this->config['scaling'], $options);
 
-        $options = array_merge($defaults, $options);
-
-        return $this->getCloudinary()->cloudinary_url($publicId, $options);
+        return $this->cloudinary->cloudinary_url($public_id, $options);
     }
 
     /**
-     * Display resource through https.
+     * Generate secure resource URL.
      *
-     * @param  string $publicId
-     * @param  array  $options
-     * @return string
+     * @param   string  $public_id
+     * @param   array   $options
+     * @return  string
      */
-    public function secureShow($publicId, $options = array())
+    public function secureShow(string $public_id, array $options = [])
     {
-        $defaults = $this->config->get('laravel-cloudinary.scaling');
+        $options = array_merge($this->config['scaling'], ['secure' => true], $options);
 
-        $options = array_merge($defaults, $options);
-
-        $options = array_merge(['secure' => true], $options);
-
-        return $this->getCloudinary()->cloudinary_url($publicId, $options);
-    }
-
-
-    /**
-     * Alias for privateDownloadUrl
-     *
-     * @param string $publicId
-     * @param string $format
-     * @param array $options
-     * @return string
-     */
-    public function showPrivateUrl($publicId, $format, $options = array())
-    {
-        return $this->privateDownloadUrl($publicId, $format, $options);
+        return $this->cloudinary->cloudinary_url($public_id, $options);
     }
 
     /**
-     * Display private image
-     *
-     * @param string $publicId
-     * @param string $format
-     * @param array $options
-     * @return string
+     * @see  privateDownloadUrl
      */
-    public function privateDownloadUrl($publicId, $format, $options = array())
+    public function showPrivateUrl(string $public_id, string $format, array $options = [])
     {
-        return $this->getCloudinary()->private_download_url($publicId, $format, $options);
+        return $this->privateDownloadUrl($public_id, $format, $options);
+    }
+
+    /**
+     * Generate private resource URL.
+     *
+     * @param   string  $public_id
+     * @param   string  $format
+     * @param   array   $options
+     * @return  string
+     */
+    public function privateDownloadUrl(string $public_id, string $format, array $options = [])
+    {
+        return $this->cloudinary->private_download_url($public_id, $format, $options);
     }
 
     /**
      * Rename public ID.
      *
-     * @param  string $publicId
-     * @param  string $toPublicId
-     * @param  array  $options
-     * @return array
+     * @param   string  $public_id
+     * @param   string  $new_public_id
+     * @param   array   $options
+     * @return  array
      */
-    public function rename($publicId, $toPublicId, $options = array())
+    public function rename(string $public_id, string $new_public_id, array $options = [])
     {
         try {
-            return $this->getUploader()->rename($publicId, $toPublicId, $options);
+            return $this->uploader->rename($public_id, $new_public_id, $options);
         } catch (\Exception $e) {
+            //
         }
 
         return false;
@@ -287,7 +247,7 @@ class Cloudinaire
      */
     public function destroy($publicId, $options = array())
     {
-        return $this->getUploader()->destroy($publicId, $options);
+        return $this->uploader->destroy($publicId, $options);
     }
 
     /**
@@ -299,7 +259,7 @@ class Cloudinaire
      */
     public function restore($publicIds = array(), $options = array())
     {
-        return $this->getApi()->restore($publicIds, $options);
+        return $this->api->restore($publicIds, $options);
     }
 
     /**
@@ -323,7 +283,7 @@ class Cloudinaire
      */
     public function deleteResources($publicIds, $options = array())
     {
-        return $this->getApi()->delete_resources($publicIds, $options);
+        return $this->api->delete_resources($publicIds, $options);
     }
 
     /**
@@ -335,7 +295,7 @@ class Cloudinaire
      */
     public function deleteResourcesByPrefix($prefix, $options=array())
     {
-        return $this->getApi()->delete_resources_by_prefix($prefix, $options);
+        return $this->api->delete_resources_by_prefix($prefix, $options);
     }
 
     /**
@@ -346,7 +306,7 @@ class Cloudinaire
      */
     public function deleteAllResources($options = array())
     {
-        return $this->getApi()->delete_all_resources($options);
+        return $this->api->delete_all_resources($options);
     }
 
     /**
@@ -358,7 +318,7 @@ class Cloudinaire
      */
     public function deleteResourcesByTag($tag, $options=array())
     {
-        return $this->getApi()->delete_resources_by_tag($tag, $options);
+        return $this->api->delete_resources_by_tag($tag, $options);
     }
 
     /**
@@ -370,7 +330,7 @@ class Cloudinaire
      */
     public function deleteDerivedResources($publicIds = array(), $options=array())
     {
-        return $this->getApi()->delete_derived_resources($publicIds, $options);
+        return $this->api->delete_derived_resources($publicIds, $options);
     }
 
     /**
@@ -394,7 +354,7 @@ class Cloudinaire
      */
     public function addTag($tag, $publicIds = array(), $options = array())
     {
-        return $this->getUploader()->add_tag($tag, $publicIds, $options);
+        return $this->uploader->add_tag($tag, $publicIds, $options);
     }
 
     /**
@@ -406,7 +366,7 @@ class Cloudinaire
      */
     public function removeTag($tag, $publicIds = array(), $options = array())
     {
-        return $this->getUploader()->remove_tag($tag, $publicIds, $options);
+        return $this->uploader->remove_tag($tag, $publicIds, $options);
     }
 
     /**
@@ -418,7 +378,7 @@ class Cloudinaire
      */
     public function replaceTag($tag, $publicIds = array(), $options = array())
     {
-        return $this->getUploader()->replace_tag($tag, $publicIds, $options);
+        return $this->uploader->replace_tag($tag, $publicIds, $options);
     }
 
     /**
@@ -431,7 +391,7 @@ class Cloudinaire
     public function createArchive($options = array(), $nameArchive = null, $mode = 'create')
     {
         $options = array_merge($options, ['target_public_id' => $nameArchive, 'mode' => $mode]);
-        return $this->getUploader()->create_archive($options);
+        return $this->uploader->create_archive($options);
     }
 
     /**
@@ -444,7 +404,7 @@ class Cloudinaire
     public function downloadArchiveUrl($options = array(), $nameArchive = null)
     {
         $options = array_merge($options, ['target_public_id' => $nameArchive]);
-        return $this->getCloudinary()->download_archive_url($options);
+        return $this->cloudinary->download_archive_url($options);
     }
 
 
@@ -456,7 +416,7 @@ class Cloudinaire
      */
     public function resources($options = array())
     {
-        return $this->getApi()->resources($options);
+        return $this->api->resources($options);
     }
 
     /**
@@ -468,7 +428,7 @@ class Cloudinaire
      */
     public function resourcesByIds($publicIds, $options = array())
     {
-        return $this->getApi()->resources_by_ids($publicIds, $options);
+        return $this->api->resources_by_ids($publicIds, $options);
     }
 
     /**
@@ -479,7 +439,7 @@ class Cloudinaire
      */
     public function resourcesByTag($tag, $options = array())
     {
-        return $this->getApi()->resources_by_tag($tag, $options);
+        return $this->api->resources_by_tag($tag, $options);
     }
 
     /**
@@ -491,7 +451,7 @@ class Cloudinaire
      */
     public function resourcesByModeration($kind, $status, $options = array())
     {
-        return $this->getApi()->resources_by_moderation($kind, $status, $options);
+        return $this->api->resources_by_moderation($kind, $status, $options);
     }
 
     /**
@@ -502,7 +462,7 @@ class Cloudinaire
      */
     public function tags($options = array())
     {
-        return $this->getApi()->tags($options);
+        return $this->api->tags($options);
     }
 
     /**
@@ -514,7 +474,7 @@ class Cloudinaire
      */
     public function resource($publicId, $options = array())
     {
-        return $this->getApi()->resource($publicId, $options);
+        return $this->api->resource($publicId, $options);
     }
 
     /**
@@ -526,7 +486,7 @@ class Cloudinaire
      */
     public function update($publicId, $options = array())
     {
-        return $this->getApi()->update($publicId, $options);
+        return $this->api->update($publicId, $options);
     }
 
     /**
@@ -537,7 +497,7 @@ class Cloudinaire
      */
     public function transformations($options = array())
     {
-        return $this->getApi()->transformations($options);
+        return $this->api->transformations($options);
     }
 
     /**
@@ -549,7 +509,7 @@ class Cloudinaire
      */
     public function transformation($transformation, $options=array())
     {
-        return $this->getApi()->transformation($transformation, $options);
+        return $this->api->transformation($transformation, $options);
     }
 
     /**
@@ -561,7 +521,7 @@ class Cloudinaire
      */
     public function deleteTransformation($transformation, $options=array())
     {
-        return $this->getApi()->delete_transformation($transformation, $options);
+        return $this->api->delete_transformation($transformation, $options);
     }
 
     /**
@@ -574,7 +534,7 @@ class Cloudinaire
      */
     public function updateTransformation($transformation, $updates = array(), $options=array())
     {
-        return $this->getApi()->update_transformation($transformation, $updates, $options);
+        return $this->api->update_transformation($transformation, $updates, $options);
     }
 
     /**
@@ -586,7 +546,7 @@ class Cloudinaire
      */
     public function createTransformation($name, $definition, $options=array())
     {
-        return $this->getApi()->create_transformation($name, $definition, $options);
+        return $this->api->create_transformation($name, $definition, $options);
     }
 
     /**
@@ -597,7 +557,7 @@ class Cloudinaire
      */
     public function uploadMappings($options=array())
     {
-        return $this->getApi()->upload_mappings($options);
+        return $this->api->upload_mappings($options);
     }
 
     /**
@@ -609,7 +569,7 @@ class Cloudinaire
      */
     public function uploadMapping($name, $options=array())
     {
-        return $this->getApi()->upload_mapping($name, $options);
+        return $this->api->upload_mapping($name, $options);
     }
 
     /**
@@ -621,7 +581,7 @@ class Cloudinaire
      */
     public function createUploadMapping($name, $options=array())
     {
-        return $this->getApi()->create_upload_mapping($name, $options);
+        return $this->api->create_upload_mapping($name, $options);
     }
 
     /**
@@ -633,7 +593,7 @@ class Cloudinaire
      */
     public function deleteUploadMapping($name, $options=array())
     {
-        return $this->getApi()->delete_upload_mapping($name, $options);
+        return $this->api->delete_upload_mapping($name, $options);
     }
 
     /**
@@ -645,7 +605,7 @@ class Cloudinaire
      */
     public function updateUploadMapping($name, $options=array())
     {
-        return $this->getApi()->update_upload_mapping($name, $options);
+        return $this->api->update_upload_mapping($name, $options);
     }
 
     /**
@@ -656,7 +616,7 @@ class Cloudinaire
      */
     public function uploadPresets($options=array())
     {
-        return $this->getApi()->upload_presets($options);
+        return $this->api->upload_presets($options);
     }
 
     /**
@@ -668,7 +628,7 @@ class Cloudinaire
      */
     public function uploadPreset($name, $options=array())
     {
-        return $this->getApi()->upload_preset($name, $options);
+        return $this->api->upload_preset($name, $options);
     }
 
     /**
@@ -680,7 +640,7 @@ class Cloudinaire
      */
     public function createUploadPreset($name, $options=array())
     {
-        return $this->getApi()->create_upload_preset($name, $options);
+        return $this->api->create_upload_preset($name, $options);
     }
 
     /**
@@ -692,7 +652,7 @@ class Cloudinaire
      */
     public function deleteUploadPreset($name, $options=array())
     {
-        return $this->getApi()->delete_upload_preset($name, $options);
+        return $this->api->delete_upload_preset($name, $options);
     }
 
     /**
@@ -704,7 +664,7 @@ class Cloudinaire
      */
     public function updateUploadPreset($name, $options=array())
     {
-        return $this->getApi()->update_upload_preset($name, $options);
+        return $this->api->update_upload_preset($name, $options);
     }
 
     /**
@@ -715,7 +675,7 @@ class Cloudinaire
      */
     public function rootFolders($options=array())
     {
-        return $this->getApi()->root_folders($options);
+        return $this->api->root_folders($options);
     }
 
     /**
@@ -727,7 +687,7 @@ class Cloudinaire
      */
     public function subfolders($name, $options=array())
     {
-        return $this->getApi()->subfolders($name, $options);
+        return $this->api->subfolders($name, $options);
     }
 
     /**
@@ -738,7 +698,7 @@ class Cloudinaire
      */
     public function usage($options=array())
     {
-        return $this->getApi()->usage($options);
+        return $this->api->usage($options);
     }
 
     /**
@@ -749,6 +709,6 @@ class Cloudinaire
      */
     public function ping($options=array())
     {
-        return $this->getApi()->ping($options);
+        return $this->api->ping($options);
     }
 }
