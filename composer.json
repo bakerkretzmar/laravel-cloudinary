@@ -16,9 +16,11 @@
         }
     ],
     "require": {
-        "php": ">=7.2.0"
+        "php": ">=7.2.0",
+        "cloudinary/cloudinary_php": "^1.14"
     },
     "require-dev": {
+        "mockery/mockery": "^1.2",
         "orchestra/testbench": "^3.8",
         "phpunit/phpunit": "^8.3"
     },
@@ -38,7 +40,7 @@
                 "Bakerkretzmar\\LaravelCloudinary\\LaravelCloudinaryServiceProvider"
             ],
             "aliases": {
-                "Cloudinary": "Bakerkretzmar\\LaravelCloudinary\\Facades\\Cloudinary"
+                "Cloudinaire": "Bakerkretzmar\\LaravelCloudinary\\Facades\\Cloudinaire"
             }
         }
     },
