@@ -167,8 +167,6 @@ class Cloudinaire
      */
     public function show(string $public_id, array $options = [])
     {
-        $options = array_merge($this->config['scaling'], $options);
-
         return $this->cloudinary->cloudinary_url($public_id, $options);
     }
 
@@ -181,7 +179,7 @@ class Cloudinaire
      */
     public function secureShow(string $public_id, array $options = [])
     {
-        $options = array_merge($this->config['scaling'], ['secure' => true], $options);
+        $options = array_merge(['secure' => true], $options);
 
         return $this->cloudinary->cloudinary_url($public_id, $options);
     }

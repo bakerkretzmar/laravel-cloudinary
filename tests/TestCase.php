@@ -21,6 +21,5 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
         config(['laravel-cloudinary.cloud_name' => 'cloud_name']);
         config(['laravel-cloudinary.key' => 'key']);
         config(['laravel-cloudinary.secret' => 'secret']);
-        config(['laravel-cloudinary.scaling' => []]);
     }
 }
