@@ -1,11 +1,10 @@
 <?php
 
-namespace JD\Cloudder;
+namespace Bakerkretzmar\LaravelCloudinary;
 
-use Cloudinary;
-use Illuminate\Config\Repository;
+use Cloudinary as CloudinaryApi;
 
-class CloudinaryWrapper
+class Cloudinaire
 {
 
     /**
@@ -43,10 +42,10 @@ class CloudinaryWrapper
      * @return void
      */
     public function __construct(
-        Repository $config,
-        Cloudinary $cloudinary,
-        Cloudinary\Uploader $uploader,
-        Cloudinary\Api $api
+        $config,
+        CloudinaryApi $cloudinary,
+        CloudinaryApi\Uploader $uploader,
+        CloudinaryApi\Api $api
     ) {
         $this->cloudinary = $cloudinary;
 
@@ -57,9 +56,9 @@ class CloudinaryWrapper
         $this->config = $config;
 
         $this->cloudinary->config(array(
-            'cloud_name' => $this->config->get('cloudder.cloudName'),
-            'api_key'    => $this->config->get('cloudder.apiKey'),
-            'api_secret' => $this->config->get('cloudder.apiSecret')
+            'cloud_name' => $this->config->get('laravel-cloudinary.cloud_name'),
+            'api_key'    => $this->config->get('laravel-cloudinary.key'),
+            'api_secret' => $this->config->get('laravel-cloudinary.secret')
         ));
     }
 
@@ -103,7 +102,7 @@ class CloudinaryWrapper
      * @param  string $publicId
      * @param  array $uploadOptions
      * @param  array $tags
-     * @return CloudinaryWrapper
+     * @return Cloudinaire
      */
     public function upload($source, $publicId = null, $uploadOptions = array(), $tags = array())
     {
@@ -132,7 +131,7 @@ class CloudinaryWrapper
      * @param  array $uploadPresets
      * @param  array $uploadOptions
      * @param  array $tags
-     * @return CloudinaryWrapper
+     * @return Cloudinaire
      */
     public function unsignedUpload($source, $publicId = null, $uploadPresets = array(),
         $uploadOptions = array(), $tags = array())
@@ -160,7 +159,7 @@ class CloudinaryWrapper
      * @param  string $publicId
      * @param  array $uploadOptions
      * @param  array $tags
-     * @return CloudinaryWrapper
+     * @return Cloudinaire
     */
     public function uploadVideo($source, $publicId = null, $uploadOptions = array(), $tags = array())
     {
@@ -197,7 +196,7 @@ class CloudinaryWrapper
      */
     public function show($publicId, $options = array())
     {
-        $defaults = $this->config->get('cloudder.scaling');
+        $defaults = $this->config->get('laravel-cloudinary.scaling');
 
         $options = array_merge($defaults, $options);
 
@@ -213,7 +212,7 @@ class CloudinaryWrapper
      */
     public function secureShow($publicId, $options = array())
     {
-        $defaults = $this->config->get('cloudder.scaling');
+        $defaults = $this->config->get('laravel-cloudinary.scaling');
 
         $options = array_merge($defaults, $options);
 
