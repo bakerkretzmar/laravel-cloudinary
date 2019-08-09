@@ -18,8 +18,12 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
 
     protected function getEnvironmentSetUp($app)
     {
-        config(['laravel-cloudinary.cloud_name' => 'cloud_name']);
-        config(['laravel-cloudinary.key' => 'key']);
-        config(['laravel-cloudinary.secret' => 'secret']);
+        if (empty(getenv('CI'))) {
+            \Dotenv\Dotenv::create(__DIR__ . '/..', '.env.testing')->load();
+        }
+
+        config(['laravel-cloudinary.cloud_name' => getenv('CLOUDINARY_CLOUD_NAME')]);
+        config(['laravel-cloudinary.key' => getenv('CLOUDINARY_API_KEY')]);
+        config(['laravel-cloudinary.secret' => getenv('CLOUDINARY_API_SECRET')]);
     }
 }
