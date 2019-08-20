@@ -56,8 +56,9 @@ class Cloudinaire
 
         $this->cloudinary->config([
             'cloud_name' => $this->config['cloud_name'],
-            'api_key'    => $this->config['key'],
+            'api_key' => $this->config['key'],
             'api_secret' => $this->config['secret'],
+            'secure' => true,
         ]);
     }
 
