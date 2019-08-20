@@ -88,12 +88,10 @@ class Cloudinaire
      */
     public function upload($source, string $public_id = null, array $options = [], array $tags = [])
     {
-        $this->uploadedResult = $this->uploader->upload($source, array_merge([
+        return $this->uploader->upload($source, array_merge([
             'public_id' => $public_id,
             'tags' => $tags,
         ], $options));
-
-        return $this;
     }
 
     /**
